@@ -18,14 +18,13 @@
 //   3. Set PSK below to a strong secret (`openssl rand -hex 32` from
 //      a terminal — DO NOT leave the placeholder in production).
 //   4. Deploy and copy the public URL of the deployed handler.
-//   5. In mhrv-rs config.json, add:
-//        "exit_node": {
-//          "enabled": true,
-//          "relay_url": "https://your-deployed-exit-node.example.com",
-//          "psk": "<the same PSK you set above>",
-//          "mode": "selective",
-//          "hosts": ["chatgpt.com", "claude.ai", "x.com", "grok.com"]
-//        }
+//   5. In mhrv-rs config.toml, add:
+//      [exit_node];
+//      enabled = true;
+//      relay_url = "https://your-deployed-exit-node.example.com";
+//      psk = "<the same PSK you set in step 1>";
+//      mode = "selective";
+//      hosts = ["chatgpt.com", "claude.ai", "x.com", "grok.com", "openai.com"];
 //
 // Threat model: PSK is the only thing keeping this from being an open
 // proxy on the public internet. Treat it like a password: do not commit
@@ -81,7 +80,7 @@ function sanitizeHeaders(h: unknown): Record<string, string> {
   return out;
 }
 
-export default async function (req: Request): Promise<Response> {
+export async function handleExitNodeRequest(req: Request): Promise<Response> {
   // Fail closed on the placeholder PSK so a fresh deploy without setup
   // can't accidentally serve as an open relay.
   if (PSK === "CHANGE_ME_TO_A_STRONG_SECRET") {
@@ -173,3 +172,7 @@ export default async function (req: Request): Promise<Response> {
     return Response.json({ e: message }, { status: 500 });
   }
 }
+
+export default {
+  fetch: handleExitNodeRequest,
+};
